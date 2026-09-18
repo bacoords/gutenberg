@@ -7,6 +7,32 @@
 	padding: 0 $grid-unit-30;
 }
 
+.routes-pattern-list__preview {
+	height: 100%;
+	position: relative;
+	overflow: hidden;
+}
+
+.routes-pattern-list__preview-edit-link {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	cursor: var(--wpds-cursor-control);
+
+	&:focus-visible {
+		outline: var(--wp-admin-border-width-focus) solid var(--wpds-color-stroke-focus);
+		outline-offset: calc(-1 * var(--wp-admin-border-width-focus));
+	}
+}
+
+.routes-pattern-list__preview-loading,
+.routes-pattern-list__preview-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+
 // Colorize synced pattern badges in grid view
 .dataviews-view-grid__badge-fields {
 	.dataviews-view-grid__field-value:has(.fields-field__pattern-sync-status-fully) {

@@ -7,6 +7,7 @@ const {
 // is a single region with view tabs instead of the classic editor's
 // navigation-and-content split with a category sidebar.
 const isSiteEditorV2 = !! process.env.GUTENBERG_E2E_SITE_EDITOR_V2;
+const REGISTERED_PATTERNS_PLUGIN = 'gutenberg-test-starter-page-patterns';
 
 /** @type {ReturnType<typeof base.extend<{patterns: Patterns}>>} */
 const test = base.extend( {
@@ -281,6 +282,79 @@ test.describe( 'Patterns', () => {
 			'Starter',
 		] );
 	} );
+
+	test.describe( 'Pattern list preview @site-editor-v2-only', () => {
+		test.beforeAll( async ( { requestUtils } ) => {
+			await requestUtils.activatePlugin( REGISTERED_PATTERNS_PLUGIN );
+		} );
+
+		test.afterAll( async ( { requestUtils } ) => {
+			await requestUtils.deactivatePlugin( REGISTERED_PATTERNS_PLUGIN );
+		} );
+
+		test( 'offers the list layout for Patterns', async ( {
+			admin,
+			patterns,
+		} ) => {
+			await admin.visitSiteEditor( { postType: 'wp_block' } );
+			await patterns.switchToList();
+
+			await expect( patterns.list ).toBeVisible();
+			await expect( patterns.preview ).toBeVisible();
+		} );
+
+		test( 'previews a registered pattern when its list row is selected', async ( {
+			admin,
+			patterns,
+		} ) => {
+			await admin.visitSiteEditor( { postType: 'wp_block' } );
+			await patterns.switchToList();
+			await patterns.selectListItem( 'About page' );
+
+			await expect(
+				patterns.previewFrame.getByText( 'About us' )
+			).toBeVisible();
+			await expect(
+				patterns.preview.getByRole( 'link', {
+					name: 'Edit',
+				} )
+			).toHaveCount( 0 );
+		} );
+
+		test( 'opens an editable pattern from its preview', async ( {
+			admin,
+			page,
+			patterns,
+			requestUtils,
+		} ) => {
+			await requestUtils.createBlock( {
+				title: 'Editable pattern',
+				status: 'publish',
+				content: `<!-- wp:paragraph -->\n<p>Editable pattern preview</p>\n<!-- /wp:paragraph -->`,
+				wp_pattern_category: [],
+			} );
+			await admin.visitSiteEditor( { postType: 'wp_block' } );
+			await page.getByRole( 'tab', { name: 'My patterns' } ).click();
+			await patterns.switchToList();
+
+			await expect(
+				patterns.previewFrame.getByText( 'Editable pattern preview' )
+			).toBeVisible();
+			await patterns.preview
+				.getByRole( 'link', { name: 'Edit' } )
+				.click();
+
+			await expect( page ).toHaveTitle( /^Editable pattern/ );
+			await expect(
+				page
+					.getByRole( 'region', { name: 'Editor top bar' } )
+					.getByRole( 'heading', {
+						name: 'Editable pattern',
+						level: 1,
+					} )
+			).toBeVisible();
+		} );
+	} );
 } );
 
 class Patterns {
@@ -301,5 +375,19 @@ class Patterns {
 		this.itemTitle = this.itemsList.locator(
 			'.dataviews-view-grid__title-field'
 		);
+		this.list = this.content.locator( '.dataviews-view-list' );
+		this.preview = this.#page.getByRole( 'region', {
+			name: 'Pattern preview',
+		} );
+		this.previewFrame = this.preview.locator( 'iframe' ).contentFrame();
+	}
+
+	async switchToList() {
+		await this.#page.getByRole( 'button', { name: 'Layout' } ).click();
+		await this.#page.getByRole( 'menuitemradio', { name: 'List' } ).click();
+	}
+
+	async selectListItem( title ) {
+		await this.list.getByRole( 'button', { name: title } ).click();
 	}
 }

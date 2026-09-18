@@ -17,18 +17,20 @@ import type {
 import { store as coreStore } from '@wordpress/core-data';
 import {
 	Button,
+	Spinner,
 	privateApis as componentsPrivateApis,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useMemo, useCallback, useState } from '@wordpress/element';
 import { privateApis as editorPrivateApis } from '@wordpress/editor';
+import { Preview } from '@wordpress/lazy-editor';
 import {
 	privateApis as patternPrivateApis,
 	// @ts-expect-error - No type declarations available for @wordpress/patterns
 } from '@wordpress/patterns';
 import { __ } from '@wordpress/i18n';
 import { unlock } from '@wordpress/routes-lock-unlock';
-import { DEFAULT_VIEWS } from './view-utils';
+import { addPatternListLayout, DEFAULT_VIEWS } from './view-utils';
 import { previewField } from './fields/preview';
 import { usePatternCategoryField } from './fields/category';
 import usePatterns, { useAugmentPatternsWithPermissions } from './use-patterns';
@@ -54,6 +56,10 @@ function PatternList() {
 			kind: 'postType',
 			name: PATTERN_POST_TYPE,
 		} );
+	const supportedLayouts = useMemo(
+		() => addPatternListLayout( defaultLayouts ),
+		[ defaultLayouts ]
+	);
 
 	if ( ! defaultView ) {
 		// The route loader resolves the view configuration before the stage
@@ -65,12 +71,57 @@ function PatternList() {
 		<PatternListView
 			type={ type }
 			defaultView={ defaultView }
-			defaultLayouts={ defaultLayouts }
+			defaultLayouts={ supportedLayouts }
 		/>
 	);
 }
 
-function PatternListView( {
+function getPatternSelection(
+	posts: NormalizedPattern[],
+	selection: string[] | undefined,
+	isListView: boolean
+) {
+	if ( ! isListView ) {
+		return selection ?? [];
+	}
+
+	const selectedId = selection?.find( ( id ) =>
+		posts.some( ( item ) => item.id === id )
+	);
+	const fallbackId = posts[ 0 ]?.id;
+	const nextId = selectedId ?? fallbackId;
+
+	return nextId ? [ nextId ] : [];
+}
+
+export function PatternPreviewCanvas() {
+	const { type = 'all' } = useParams( {
+		from: '/patterns/list/$type',
+	} );
+	const { default_view: defaultView, default_layouts: defaultLayouts } =
+		useViewConfig( {
+			kind: 'postType',
+			name: PATTERN_POST_TYPE,
+		} );
+	const supportedLayouts = useMemo(
+		() => addPatternListLayout( defaultLayouts ),
+		[ defaultLayouts ]
+	);
+
+	if ( ! defaultView ) {
+		return null;
+	}
+
+	return (
+		<PatternPreviewCanvasView
+			type={ type }
+			defaultView={ defaultView }
+			defaultLayouts={ supportedLayouts }
+		/>
+	);
+}
+
+function PatternPreviewCanvasView( {
 	type,
 	defaultView,
 	defaultLayouts,
@@ -79,26 +130,78 @@ function PatternListView( {
 	defaultView: View;
 	defaultLayouts: SupportedLayouts | undefined;
 } ) {
-	const invalidate = useInvalidate();
+	const { searchParams, view, posts, isResolving } = usePatternListData( {
+		type,
+		defaultView,
+		defaultLayouts,
+	} );
+	const selection = getPatternSelection(
+		posts,
+		searchParams.postIds,
+		view.type === 'list'
+	);
+	const pattern = posts.find( ( item ) => item.id === selection[ 0 ] );
+
+	if ( isResolving && ! pattern ) {
+		return (
+			<div
+				className="routes-pattern-list__preview-loading"
+				role="region"
+				aria-label={ __( 'Pattern preview' ) }
+			>
+				<Spinner />
+			</div>
+		);
+	}
+
+	if ( ! pattern ) {
+		return (
+			<div
+				className="routes-pattern-list__preview-empty"
+				role="region"
+				aria-label={ __( 'Pattern preview' ) }
+			>
+				{ __( 'No pattern selected.' ) }
+			</div>
+		);
+	}
+
+	const isEditable = pattern.type === PATTERN_TYPES.user;
+
+	return (
+		<section
+			className="routes-pattern-list__preview"
+			aria-label={ __( 'Pattern preview' ) }
+		>
+			<Preview
+				blocks={ pattern.blocks }
+				content={ pattern.content }
+				description={ pattern.description }
+			/>
+			{ isEditable && (
+				<Link
+					className="routes-pattern-list__preview-edit-link"
+					to={ `/types/wp_block/edit/${ encodeURIComponent(
+						pattern.id
+					) }` }
+					aria-label={ __( 'Edit' ) }
+				/>
+			) }
+		</section>
+	);
+}
+
+function usePatternListData( {
+	type,
+	defaultView,
+	defaultLayouts,
+}: {
+	type: string;
+	defaultView: View;
+	defaultLayouts: SupportedLayouts | undefined;
+} ) {
 	const navigate = useNavigate();
 	const searchParams = useSearch( { from: '/patterns/list/$type' } );
-
-	const postTypeObject = useSelect(
-		( select ) => select( coreStore ).getPostType( PATTERN_POST_TYPE ),
-		[]
-	);
-
-	const labels = postTypeObject?.labels;
-	const canCreateRecord = useSelect(
-		( select ) =>
-			select( coreStore ).canUser( 'create', {
-				kind: 'postType',
-				name: PATTERN_POST_TYPE,
-			} ),
-		[]
-	);
-
-	const [ showPatternModal, setShowPatternModal ] = useState( false );
 
 	// Callback to handle URL query parameter changes
 	const handleQueryParamsChange = useCallback(
@@ -114,7 +217,7 @@ function PatternListView( {
 	);
 
 	// Use the new view persistence hook
-	const { view, isModified, updateView, resetToDefault } = useView( {
+	const viewState = useView( {
 		kind: 'postType',
 		name: PATTERN_POST_TYPE,
 		slug: 'default-new',
@@ -123,20 +226,7 @@ function PatternListView( {
 		queryParams: searchParams,
 		onChangeQueryParams: handleQueryParamsChange,
 	} );
-
-	const onReset = () => {
-		resetToDefault();
-		invalidate();
-	};
-	const onChangeView = ( newView: View ) => {
-		updateView( newView );
-		if ( newView.type !== view.type ) {
-			// The rendered surfaces depend on the view type,
-			// so we need to retrigger the router loader when switching the view type.
-			// try switching from list to table and vice versa.
-			invalidate();
-		}
-	};
+	const { view } = viewState;
 
 	// Extract filter values from view
 	const categoryFilter = useMemo( () => {
@@ -205,6 +295,69 @@ function PatternListView( {
 			fields
 		);
 	}, [ patternsWithPermissions, view, fields ] );
+
+	return {
+		...viewState,
+		searchParams,
+		posts,
+		fields,
+		paginationInfo,
+		isResolving,
+	};
+}
+
+function PatternListView( {
+	type,
+	defaultView,
+	defaultLayouts,
+}: {
+	type: string;
+	defaultView: View;
+	defaultLayouts: SupportedLayouts | undefined;
+} ) {
+	const invalidate = useInvalidate();
+	const navigate = useNavigate();
+	const {
+		searchParams,
+		view,
+		isModified,
+		updateView,
+		resetToDefault,
+		posts,
+		fields,
+		paginationInfo,
+		isResolving,
+	} = usePatternListData( { type, defaultView, defaultLayouts } );
+
+	const postTypeObject = useSelect(
+		( select ) => select( coreStore ).getPostType( PATTERN_POST_TYPE ),
+		[]
+	);
+
+	const labels = postTypeObject?.labels;
+	const canCreateRecord = useSelect(
+		( select ) =>
+			select( coreStore ).canUser( 'create', {
+				kind: 'postType',
+				name: PATTERN_POST_TYPE,
+			} ),
+		[]
+	);
+
+	const [ showPatternModal, setShowPatternModal ] = useState( false );
+
+	const onReset = () => {
+		resetToDefault();
+		invalidate();
+	};
+	const onChangeView = ( newView: View ) => {
+		updateView( newView );
+		if ( newView.type !== view.type ) {
+			// The rendered surfaces depend on the view type,
+			// so we need to retrigger the router loader when switching the view type.
+			invalidate();
+		}
+	};
 
 	const { totalItems, totalPages } = paginationInfo;
 
@@ -275,17 +428,11 @@ function PatternListView( {
 		return null;
 	}
 
-	const selection = searchParams.postIds ?? [];
-
-	// Auto-select first pattern in list view if none selected
-	if ( view.type === 'list' && selection.length === 0 && posts?.length > 0 ) {
-		selection.push( posts[ 0 ].id );
-	}
-
-	// Until list view supports multi selection, only keep the first item.
-	if ( view.type === 'list' ) {
-		selection.splice( 1 );
-	}
+	const selection = getPatternSelection(
+		posts,
+		searchParams.postIds,
+		view.type === 'list'
+	);
 
 	return (
 		<Page

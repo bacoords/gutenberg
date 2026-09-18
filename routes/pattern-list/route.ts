@@ -1,18 +1,20 @@
-import { resolveSelect } from '@wordpress/data';
-import { store as coreStore } from '@wordpress/core-data';
 import { __ } from '@wordpress/i18n';
-import { unlock } from '@wordpress/routes-lock-unlock';
+import { ensureView } from './view-utils';
 
 /**
  * Route configuration for pattern list.
  */
 export const route = {
 	title: () => __( 'Patterns' ),
-	loader: async () => {
-		// Preload the view configuration the stage resolves its view from.
-		await unlock( resolveSelect( coreStore ) ).getViewConfig(
-			'postType',
-			'wp_block'
-		);
+	async canvas( context: {
+		search: {
+			page?: number;
+			search?: string;
+		};
+	} ) {
+		const view = await ensureView( context.search );
+
+		// The route's custom canvas renders the selected pattern preview.
+		return view.type === 'list' ? null : undefined;
 	},
 };
