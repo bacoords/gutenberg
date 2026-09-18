@@ -201,6 +201,9 @@ export default function Root() {
 											<ErrorBoundary>
 												<CanvasRenderer
 													canvas={ canvas }
+													showBackButton={
+														!! isFullScreen
+													}
 													routeContentModule={
 														routeContentModule
 													}

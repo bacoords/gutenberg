@@ -15,16 +15,18 @@ import { getDeviceType } from './viewport';
 
 interface CanvasProps {
 	canvas: CanvasData;
+	showBackButton?: boolean;
 }
 
 /**
  * Canvas component that dynamically loads and renders the lazy editor.
  *
- * @param {Object} props        - Component props
- * @param {Object} props.canvas - Canvas data containing postType and postId
+ * @param {Object}  props                - Component props
+ * @param {Object}  props.canvas         - Canvas data containing postType and postId
+ * @param {boolean} props.showBackButton - Whether to show the editor's back button
  * @return Canvas surface with editor
  */
-export default function Canvas( { canvas }: CanvasProps ) {
+export default function Canvas( { canvas, showBackButton }: CanvasProps ) {
 	const [ Editor, setEditor ] = useState< any >( null );
 	const navigate = useNavigate();
 	const { onNavigateToEntityRecord, onNavigateToPreviousEntityRecord } =
@@ -146,7 +148,7 @@ export default function Canvas( { canvas }: CanvasProps ) {
 
 	// Render back button in full-screen mode (when not preview)
 	// Uses render prop pattern to receive fillProps from Slot
-	const backButton = ! canvas.isPreview
+	const backButton = showBackButton
 		? ( { length }: { length: number } ) => (
 				<BootBackButton length={ length } />
 			)

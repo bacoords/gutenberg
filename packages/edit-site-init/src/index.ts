@@ -64,4 +64,7 @@ export async function init() {
 		enableChoosePatternModal: true,
 		showBlockBreadcrumbs: true,
 	} );
+	dispatch( preferencesStore ).setDefaults( 'core/edit-post', {
+		fullscreenMode: true,
+	} );
 }

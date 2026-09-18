@@ -222,36 +222,43 @@
 	inset-inline-start: 0 !important;
 }
 
-// Full-screen canvas mode
+// Editor canvas mode
+.layout.has-editor-canvas .surfaces,
 .layout.has-full-canvas .surfaces {
 	margin: 0;
 	gap: 0;
 }
 
+.layout.has-editor-canvas .stage,
+.layout.has-editor-canvas .inspector,
 .layout.has-full-canvas .stage,
 .layout.has-full-canvas .inspector {
 	display: none;
 }
 
+.layout.has-editor-canvas .canvas,
 .layout.has-full-canvas .canvas {
-	position: fixed;
-	top: var(--wp-admin--admin-bar--height, 0);
-	inset-inline-start: 0;
-	inset-inline-end: 0;
-	bottom: 0;
 	max-width: none;
 	margin: 0;
 	border-radius: 0;
 	border: none;
 	box-shadow: none;
 	overflow: hidden;
+}
+
+// Full-screen canvas mode
+.layout.has-full-canvas .canvas {
+	position: fixed;
+	top: var(--wp-admin--admin-bar--height, 0);
+	inset-inline-start: 0;
+	inset-inline-end: 0;
+	bottom: 0;
 
 	.layout-single-page & {
 		top: variables.$admin-bar-height-big;
 
 		@include mixins.break-medium {
 			top: variables.$admin-bar-height;
-
 		}
 	}
 }

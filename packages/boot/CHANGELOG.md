@@ -5,6 +5,7 @@
 ### Enhancements
 
 -   Allow applications to provide a default route when the URL does not include the `p` query argument.
+-   Add the post editor's fullscreen mode to entity editors embedded in wp-admin pages.
 
 ## 0.22.0 (2026-09-10)
 

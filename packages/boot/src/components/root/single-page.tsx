@@ -9,6 +9,9 @@ import { UnsavedChangesWarning } from '@wordpress/editor';
 import SavePanel from '../save-panel';
 import CanvasRenderer from '../canvas-renderer';
 import PluginArea from '../plugin-area';
+import EditorFullscreenMode, {
+	useIsEditorFullscreenMode,
+} from '../editor-fullscreen-mode';
 import { unlock } from '../../lock-unlock';
 import type { CanvasData } from '../../store/types';
 import useSyncBodyBackground from './use-sync-body-background';
@@ -28,7 +31,9 @@ export default function RootSinglePage() {
 		CanvasData | null | undefined;
 	const routeContentModule = ( currentMatch?.loaderData as any )
 		?.routeContentModule as string | undefined;
-	const isFullScreen = canvas && ! canvas.isPreview;
+	const isEditorCanvas = !! canvas && ! canvas.isPreview;
+	const isFullscreenMode = useIsEditorFullscreenMode();
+	const isFullScreen = isEditorCanvas && isFullscreenMode;
 
 	useRouteTitle();
 
@@ -39,6 +44,9 @@ export default function RootSinglePage() {
 	return (
 		<SlotFillProvider>
 			<PluginArea />
+			{ isEditorCanvas && (
+				<EditorFullscreenMode isActive={ isFullscreenMode } />
+			) }
 			<ThemeProvider
 				isRoot
 				color={ { ...themeColors, background: '#f8f8f8' } }
@@ -52,6 +60,8 @@ export default function RootSinglePage() {
 							{
 								[ styles[ 'has-canvas' ] ]:
 									!! canvas || canvas === null,
+								[ styles[ 'has-editor-canvas' ] ]:
+									isEditorCanvas,
 								[ styles[ 'has-full-canvas' ] ]: isFullScreen,
 							}
 						) }
@@ -75,6 +85,7 @@ export default function RootSinglePage() {
 									<div className={ styles.canvas }>
 										<CanvasRenderer
 											canvas={ canvas }
+											showBackButton={ isFullScreen }
 											routeContentModule={
 												routeContentModule
 											}
