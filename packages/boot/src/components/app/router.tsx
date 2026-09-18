@@ -177,11 +177,11 @@ function createRouteTree(
 }
 
 // Create custom history that parses ?p= query parameter
-function createPathHistory() {
+function createPathHistory( defaultPath = '/' ) {
 	return createBrowserHistory( {
 		parseLocation: () => {
 			const url = new URL( window.location.href );
-			const path = url.searchParams.get( 'p' ) || '/';
+			const path = url.searchParams.get( 'p' ) || defaultPath;
 			const pathHref = `${ path }${ url.hash }`;
 			return parseHref( pathHref, window.history.state );
 		},
@@ -196,14 +196,16 @@ function createPathHistory() {
 interface RouterProps {
 	routes: Route[];
 	rootComponent?: ComponentType;
+	defaultPath?: string;
 }
 
 export default function Router( {
 	routes,
 	rootComponent = Root,
+	defaultPath,
 }: RouterProps ) {
 	const router = useMemo( () => {
-		const history = createPathHistory();
+		const history = createPathHistory( defaultPath );
 		const routeTree = createRouteTree( routes, rootComponent );
 
 		return createRouter( {
@@ -231,7 +233,7 @@ export default function Router( {
 				},
 			},
 		} );
-	}, [ routes, rootComponent ] );
+	}, [ routes, rootComponent, defaultPath ] );
 
 	return <RouterProvider router={ router } />;
 }

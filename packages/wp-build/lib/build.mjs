@@ -1237,6 +1237,7 @@ async function generatePagesPhp( pageData, replacements ) {
 			'{{PREFIX}}': prefixUnderscore,
 			'{{INIT_MODULES_PHP_ARRAY}}': initModulesPhp,
 			'{{INIT_MODULES_JSON}}': JSON.stringify( page.initModules ),
+			'{{DEFAULT_PATH_JSON}}': JSON.stringify( page.defaultPath || '/' ),
 			'{{CAPABILITY}}': page.capability || DEFAULT_PAGE_CAPABILITY,
 		};
 
@@ -2370,6 +2371,7 @@ async function buildAll( baseUrlExpression ) {
 				id: page,
 				init: [],
 				title: undefined,
+				defaultPath: undefined,
 				capability: DEFAULT_PAGE_CAPABILITY,
 			};
 		}
@@ -2377,6 +2379,7 @@ async function buildAll( baseUrlExpression ) {
 			id: page.id,
 			init: page.init || [],
 			title: page.title || undefined,
+			defaultPath: page.defaultPath || undefined,
 			experimental: page.experimental || false,
 			capability: page.capability || DEFAULT_PAGE_CAPABILITY,
 		};
@@ -2446,6 +2449,7 @@ async function buildAll( baseUrlExpression ) {
 			routes: pageRoutes,
 			initModules: page.init,
 			title: page.title,
+			defaultPath: page.defaultPath,
 			capability: page.capability,
 		};
 	} );

@@ -7,12 +7,19 @@ import type { MenuItem, Route } from '../../store/types';
 
 interface AppProps {
 	rootComponent?: ComponentType;
+	defaultPath?: string;
 }
 
-function App( { rootComponent }: AppProps ) {
+function App( { rootComponent, defaultPath }: AppProps ) {
 	const routes = useSelect( ( select ) => select( store ).getRoutes(), [] );
 
-	return <Router routes={ routes } rootComponent={ rootComponent } />;
+	return (
+		<Router
+			routes={ routes }
+			rootComponent={ rootComponent }
+			defaultPath={ defaultPath }
+		/>
+	);
 }
 
 /*
@@ -33,6 +40,7 @@ interface InitProps {
 	routes?: Route[];
 	initModules?: string[];
 	dashboardLink?: string;
+	defaultPath?: string;
 }
 
 export async function init( {
@@ -41,6 +49,7 @@ export async function init( {
 	routes,
 	initModules,
 	dashboardLink,
+	defaultPath,
 }: InitProps ) {
 	( menuItems ?? [] ).forEach( ( menuItem ) => {
 		dispatch( store ).registerMenuItem( menuItem.id, menuItem );
@@ -62,7 +71,7 @@ export async function init( {
 		const root = createRoot( rootElement );
 		root.render(
 			<StrictMode>
-				<App />
+				<App defaultPath={ defaultPath } />
 			</StrictMode>
 		);
 	}
@@ -72,12 +81,14 @@ interface InitSinglePageProps {
 	mountId: string;
 	routes?: Route[];
 	initModules?: string[];
+	defaultPath?: string;
 }
 
 export async function initSinglePage( {
 	mountId,
 	routes,
 	initModules,
+	defaultPath,
 }: InitSinglePageProps ) {
 	( routes ?? [] ).forEach( ( route ) => {
 		dispatch( store ).registerRoute( route );
@@ -91,7 +102,10 @@ export async function initSinglePage( {
 		const root = createRoot( rootElement );
 		root.render(
 			<StrictMode>
-				<App rootComponent={ RootSinglePage } />
+				<App
+					rootComponent={ RootSinglePage }
+					defaultPath={ defaultPath }
+				/>
 			</StrictMode>
 		);
 	}

@@ -4,7 +4,10 @@
 	"private": true,
 	"route": {
 		"path": "/navigation",
-		"page": "site-editor-v2"
+		"page": [
+			"site-editor-v2",
+			"site-navigation"
+		]
 	},
 	"dependencies": {
 		"@wordpress/route": "file:../../packages/route"

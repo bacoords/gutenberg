@@ -14,6 +14,22 @@ describe( 'page-wp-admin.php template', () => {
 			'<div id="example-wp-admin-app" class="boot-layout-container"></div>'
 		);
 	} );
+
+	it( 'forwards the configured default path to Boot', async () => {
+		const generatedPage = await generateTemplate(
+			'page-wp-admin.php.template',
+			{
+				'{{DEFAULT_PATH_JSON}}': '"/styles"',
+			}
+		);
+
+		expect( generatedPage ).toContain(
+			'mod.initSinglePage( { mountId, routes, initModules, defaultPath } );'
+		);
+		expect( generatedPage ).toContain(
+			'wp_json_encode( "/styles", JSON_HEX_TAG | JSON_UNESCAPED_SLASHES )'
+		);
+	} );
 } );
 
 describe( 'page.php template', () => {

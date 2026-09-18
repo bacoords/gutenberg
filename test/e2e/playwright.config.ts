@@ -58,7 +58,7 @@ const config = defineConfig( {
 		{
 			name: 'chromium',
 			use: { ...devices[ 'Desktop Chrome' ] },
-			grepInvert: /-chromium/,
+			grepInvert: /-chromium|@site-editor-v2-only/,
 		},
 		{
 			name: 'webkit',

@@ -4,7 +4,10 @@
 	"private": true,
 	"route": {
 		"path": "/patterns/list/$type",
-		"page": "site-editor-v2"
+		"page": [
+			"site-editor-v2",
+			"site-patterns"
+		]
 	},
 	"dependencies": {
 		"@wordpress/admin-ui": "file:../../packages/admin-ui",

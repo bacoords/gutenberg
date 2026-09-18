@@ -4,7 +4,10 @@
 	"private": true,
 	"route": {
 		"path": "/template-parts/list/$area",
-		"page": "site-editor-v2"
+		"page": [
+			"site-editor-v2",
+			"site-template-parts"
+		]
 	},
 	"dependencies": {
 		"@wordpress/admin-ui": "file:../../packages/admin-ui",

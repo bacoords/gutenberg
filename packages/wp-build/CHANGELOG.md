@@ -4,6 +4,7 @@
 
 ### Enhancements
 
+-   Pages: add a `defaultPath` setting for selecting the initial route when the URL does not include the `p` query argument.
 -   Carry a widget's `attributes` from `widget.json` into `build/widgets/registry.php` ([#82485](https://github.com/WordPress/gutenberg/pull/82485)).
 -   Build `.cjs`, `.mts` and `.cts` source files, including route and widget entry points, and rewrite their local imports to the emitted `.mjs` or `.cjs` extension ([#83071](https://github.com/WordPress/gutenberg/pull/83071)).
 -   Import route stage, inspector and canvas files by their full file name, so a route entry no longer depends on esbuild extending an extensionless path ([#83071](https://github.com/WordPress/gutenberg/pull/83071)).

@@ -173,10 +173,10 @@ function {{PREFIX}}_{{PAGE_SLUG_UNDERSCORE}}_wp_admin_enqueue_scripts( $hook_suf
 		 * "Cannot unlock an undefined object". See <https://core.trac.wordpress.org/ticket/65103>.
 		 */
 		$init_js_function = <<<'JS'
-		( mountId, routes, initModules ) => {
+		( mountId, routes, initModules, defaultPath ) => {
 			const run = async () => {
 				const mod = await import( "@wordpress/boot" );
-				mod.initSinglePage( { mountId, routes, initModules } );
+				mod.initSinglePage( { mountId, routes, initModules, defaultPath } );
 			};
 			if ( document.readyState === "loading" ) {
 				document.addEventListener( "DOMContentLoaded", run );
@@ -188,11 +188,12 @@ function {{PREFIX}}_{{PAGE_SLUG_UNDERSCORE}}_wp_admin_enqueue_scripts( $hook_suf
 		wp_add_inline_script(
 			'{{PAGE_SLUG}}-wp-admin-prerequisites',
 			sprintf(
-				'( %s )( %s, %s, %s );',
+				'( %s )( %s, %s, %s, %s );',
 				$init_js_function,
 				wp_json_encode( '{{PAGE_SLUG}}-wp-admin-app', JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ),
 				wp_json_encode( $routes, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ),
-				wp_json_encode( $init_modules, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES )
+				wp_json_encode( $init_modules, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ),
+				wp_json_encode( {{DEFAULT_PATH_JSON}}, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES )
 			)
 		);
 

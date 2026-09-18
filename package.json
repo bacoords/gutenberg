@@ -72,6 +72,51 @@
 				"experimental": true
 			},
 			{
+				"id": "site-styles",
+				"init": [
+					"@wordpress/edit-site-init"
+				],
+				"defaultPath": "/styles",
+				"capability": "edit_theme_options",
+				"experimental": true
+			},
+			{
+				"id": "site-templates",
+				"init": [
+					"@wordpress/edit-site-init"
+				],
+				"defaultPath": "/templates",
+				"capability": "edit_theme_options",
+				"experimental": true
+			},
+			{
+				"id": "site-template-parts",
+				"init": [
+					"@wordpress/edit-site-init"
+				],
+				"defaultPath": "/template-parts",
+				"capability": "edit_theme_options",
+				"experimental": true
+			},
+			{
+				"id": "site-patterns",
+				"init": [
+					"@wordpress/edit-site-init"
+				],
+				"defaultPath": "/patterns",
+				"capability": "edit_theme_options",
+				"experimental": true
+			},
+			{
+				"id": "site-navigation",
+				"init": [
+					"@wordpress/edit-site-init"
+				],
+				"defaultPath": "/navigation",
+				"capability": "edit_theme_options",
+				"experimental": true
+			},
+			{
 				"id": "theme-preview",
 				"capability": "switch_themes",
 				"experimental": true

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Enhancements
+
+-   Allow applications to provide a default route when the URL does not include the `p` query argument.
+
 ## 0.22.0 (2026-09-10)
 
 ### Internal

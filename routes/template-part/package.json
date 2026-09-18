@@ -4,7 +4,10 @@
 	"private": true,
 	"route": {
 		"path": "/template-parts",
-		"page": "site-editor-v2"
+		"page": [
+			"site-editor-v2",
+			"site-template-parts"
+		]
 	},
 	"dependencies": {
 		"@wordpress/route": "file:../../packages/route"

@@ -4,7 +4,12 @@
 	"private": true,
 	"route": {
 		"path": "/types/$type/edit/$",
-		"page": "site-editor-v2"
+		"page": [
+			"site-editor-v2",
+			"site-templates",
+			"site-template-parts",
+			"site-patterns"
+		]
 	},
 	"dependencies": {
 		"@wordpress/core-data": "file:../../packages/core-data",
