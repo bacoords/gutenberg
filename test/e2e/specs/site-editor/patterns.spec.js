@@ -303,6 +303,19 @@ test.describe( 'Patterns', () => {
 			await expect( patterns.preview ).toBeVisible();
 		} );
 
+		test( 'restores pattern previews when switching back to Grid', async ( {
+			admin,
+			patterns,
+		} ) => {
+			await admin.visitSiteEditor( { postType: 'wp_block' } );
+			await patterns.switchToList();
+			await patterns.switchToGrid();
+
+			await expect(
+				patterns.gridPreviewFrame.getByText( 'About us' )
+			).toBeVisible();
+		} );
+
 		test( 'previews a registered pattern when its list row is selected', async ( {
 			admin,
 			patterns,
@@ -375,6 +388,11 @@ class Patterns {
 		this.itemTitle = this.itemsList.locator(
 			'.dataviews-view-grid__title-field'
 		);
+		this.grid = this.content.locator( '.dataviews-view-grid' );
+		this.gridPreviewFrame = this.grid
+			.locator( 'iframe' )
+			.first()
+			.contentFrame();
 		this.list = this.content.locator( '.dataviews-view-list' );
 		this.preview = this.#page.getByRole( 'region', {
 			name: 'Pattern preview',
@@ -385,6 +403,11 @@ class Patterns {
 	async switchToList() {
 		await this.#page.getByRole( 'button', { name: 'Layout' } ).click();
 		await this.#page.getByRole( 'menuitemradio', { name: 'List' } ).click();
+	}
+
+	async switchToGrid() {
+		await this.#page.getByRole( 'button', { name: 'Layout' } ).click();
+		await this.#page.getByRole( 'menuitemradio', { name: 'Grid' } ).click();
 	}
 
 	async selectListItem( title ) {

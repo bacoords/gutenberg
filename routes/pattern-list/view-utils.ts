@@ -24,9 +24,24 @@ export function addPatternListLayout(
 ): SupportedLayouts {
 	const listLayout =
 		defaultLayouts?.list === true ? {} : ( defaultLayouts?.list ?? {} );
+	const gridLayout =
+		defaultLayouts?.grid === true ? {} : defaultLayouts?.grid;
+	const tableLayout =
+		defaultLayouts?.table === true ? {} : defaultLayouts?.table;
 
 	return {
 		...defaultLayouts,
+		// DataViews carries common view properties across layout switches. Make
+		// the inverse of the list default explicit so `showMedia: false` cannot
+		// leak into the grid or table views on the return trip.
+		grid: gridLayout && {
+			showMedia: true,
+			...gridLayout,
+		},
+		table: tableLayout && {
+			showMedia: true,
+			...tableLayout,
+		},
 		list: {
 			showMedia: false,
 			...listLayout,
