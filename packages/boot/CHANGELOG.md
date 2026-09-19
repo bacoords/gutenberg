@@ -6,6 +6,7 @@
 
 -   Allow applications to provide a default route when the URL does not include the `p` query argument.
 -   Add the post editor's fullscreen mode to entity editors embedded in wp-admin pages.
+-   Navigate wp-admin menu links to another route on the same Boot page without reloading the document.
 
 ## 0.22.0 (2026-09-10)
 

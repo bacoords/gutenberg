@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { __ } from '@wordpress/i18n';
-import { useMemo } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 import { Page } from '@wordpress/admin-ui';
 import {
 	privateApis as routePrivateApis,
@@ -193,6 +193,92 @@ function createPathHistory( defaultPath = '/' ) {
 	} );
 }
 
+function getAdminMenuRouteLink( event: MouseEvent ) {
+	if (
+		event.defaultPrevented ||
+		event.button !== 0 ||
+		event.metaKey ||
+		event.ctrlKey ||
+		event.shiftKey ||
+		event.altKey ||
+		! ( event.target instanceof Element )
+	) {
+		return null;
+	}
+
+	const anchor =
+		event.target.closest< HTMLAnchorElement >( '#adminmenu a[href]' );
+	if (
+		! anchor ||
+		( anchor.target && anchor.target !== '_self' ) ||
+		anchor.hasAttribute( 'download' )
+	) {
+		return null;
+	}
+
+	const currentUrl = new URL( window.location.href );
+	const targetUrl = new URL( anchor.href, currentUrl );
+	const routePath = targetUrl.searchParams.get( 'p' );
+
+	if (
+		! routePath ||
+		targetUrl.origin !== currentUrl.origin ||
+		targetUrl.pathname !== currentUrl.pathname ||
+		targetUrl.searchParams.get( 'page' ) !==
+			currentUrl.searchParams.get( 'page' )
+	) {
+		return null;
+	}
+
+	return { anchor, routePath };
+}
+
+function setCurrentAdminMenuLink( anchor: HTMLAnchorElement ) {
+	const submenu = anchor.closest( '.wp-submenu' );
+	if ( ! submenu ) {
+		return;
+	}
+
+	submenu.querySelectorAll( 'li.current' ).forEach( ( item ) => {
+		item.classList.remove( 'current' );
+	} );
+	submenu.querySelectorAll( 'a[aria-current]' ).forEach( ( item ) => {
+		item.removeAttribute( 'aria-current' );
+	} );
+
+	anchor.closest( 'li' )?.classList.add( 'current' );
+	anchor.setAttribute( 'aria-current', 'page' );
+}
+
+function syncCurrentAdminMenuLink() {
+	const currentUrl = new URL( window.location.href );
+	const currentPage = currentUrl.searchParams.get( 'page' );
+	const currentPath = currentUrl.searchParams.get( 'p' );
+
+	if ( ! currentPage || ! currentPath ) {
+		return;
+	}
+
+	const matchingAnchor = Array.from(
+		document.querySelectorAll< HTMLAnchorElement >( '#adminmenu a[href]' )
+	).find( ( anchor ) => {
+		const url = new URL( anchor.href, currentUrl );
+		const linkPath = url.searchParams.get( 'p' );
+		return (
+			url.origin === currentUrl.origin &&
+			url.pathname === currentUrl.pathname &&
+			url.searchParams.get( 'page' ) === currentPage &&
+			!! linkPath &&
+			( linkPath === currentPath ||
+				currentPath.startsWith( `${ linkPath }/` ) )
+		);
+	} );
+
+	if ( matchingAnchor ) {
+		setCurrentAdminMenuLink( matchingAnchor );
+	}
+}
+
 interface RouterProps {
 	routes: Route[];
 	rootComponent?: ComponentType;
@@ -234,6 +320,27 @@ export default function Router( {
 			},
 		} );
 	}, [ routes, rootComponent, defaultPath ] );
+
+	useEffect( () => {
+		const handleAdminMenuClick = ( event: MouseEvent ) => {
+			const routeLink = getAdminMenuRouteLink( event );
+			if ( ! routeLink ) {
+				return;
+			}
+
+			event.preventDefault();
+			setCurrentAdminMenuLink( routeLink.anchor );
+			void router.navigate( { to: routeLink.routePath } );
+		};
+
+		document.addEventListener( 'click', handleAdminMenuClick );
+		window.addEventListener( 'popstate', syncCurrentAdminMenuLink );
+
+		return () => {
+			document.removeEventListener( 'click', handleAdminMenuClick );
+			window.removeEventListener( 'popstate', syncCurrentAdminMenuLink );
+		};
+	}, [ router ] );
 
 	return <RouterProvider router={ router } />;
 }

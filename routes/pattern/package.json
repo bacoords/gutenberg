@@ -4,10 +4,7 @@
 	"private": true,
 	"route": {
 		"path": "/patterns",
-		"page": [
-			"site-editor-v2",
-			"site-patterns"
-		]
+		"page": "site-editor-v2"
 	},
 	"dependencies": {
 		"@wordpress/route": "file:../../packages/route"
