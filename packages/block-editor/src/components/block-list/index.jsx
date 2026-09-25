@@ -11,6 +11,7 @@ import {
 	useEffect,
 	useMemo,
 	useCallback,
+	useState,
 } from '@wordpress/element';
 import { createBlock, getDefaultBlockName } from '@wordpress/blocks';
 import BlockListBlock from './block';
@@ -25,6 +26,7 @@ import {
 	DEFAULT_BLOCK_EDIT_CONTEXT,
 } from '../block-edit/context';
 import { ZoomOutSeparator } from './zoom-out-separator';
+import BlockSettingsDropdown from '../block-settings-menu/block-settings-dropdown';
 import { unlock } from '../../lock-unlock';
 
 export const IntersectionObserver = createContext();
@@ -35,12 +37,17 @@ const delayedBlockVisibilityDebounceOptions = {
 	trailing: true,
 };
 
+function ContextMenuToggle() {
+	return null;
+}
+
 function Root( { className, ...settings } ) {
 	const {
 		isOutlineMode,
 		isFocusMode,
 		isPreviewMode,
 		editedContentOnlySection,
+		allowRightClickOverrides,
 	} = useSelect( ( select ) => {
 		const {
 			getSettings,
@@ -52,6 +59,7 @@ function Root( { className, ...settings } ) {
 			outlineMode,
 			focusMode,
 			isPreviewMode: _isPreviewMode,
+			allowRightClickOverrides: _allowRightClickOverrides,
 		} = getSettings();
 		return {
 			isOutlineMode: outlineMode && ! isTyping(),
@@ -64,10 +72,97 @@ function Root( { className, ...settings } ) {
 				! _isPreviewMode && ( focusMode || hasBlockSpotlight() ),
 			isPreviewMode: _isPreviewMode,
 			editedContentOnlySection: getEditedContentOnlySection(),
+			allowRightClickOverrides: _allowRightClickOverrides,
 		};
 	}, [] );
 	const registry = useRegistry();
-	const { setBlockVisibility } = useDispatch( blockEditorStore );
+	const { selectBlock, setBlockVisibility } = useDispatch( blockEditorStore );
+	const [ contextMenu, setContextMenu ] = useState();
+
+	const onMouseDownCapture = useCallback(
+		( event ) => {
+			if (
+				allowRightClickOverrides &&
+				! isPreviewMode &&
+				event.button === 2
+			) {
+				const blockElement = event.target.closest?.( '[data-block]' );
+				if (
+					blockElement &&
+					event.currentTarget.contains( blockElement )
+				) {
+					// Keep a multi-selection intact until the context menu opens.
+					event.preventDefault();
+				}
+			}
+		},
+		[ allowRightClickOverrides, isPreviewMode ]
+	);
+
+	const onContextMenu = useCallback(
+		( event ) => {
+			if ( ! allowRightClickOverrides || isPreviewMode ) {
+				return;
+			}
+
+			const blockElement = event.target.closest?.( '[data-block]' );
+			if (
+				! blockElement ||
+				! event.currentTarget.contains( blockElement )
+			) {
+				return;
+			}
+
+			const clientId = blockElement.getAttribute( 'data-block' );
+			const blockEditor = registry.select( blockEditorStore );
+			if ( ! blockEditor.getBlock( clientId ) ) {
+				return;
+			}
+
+			const { ownerDocument } = blockElement;
+			if ( ! ownerDocument.hasFocus() ) {
+				return;
+			}
+
+			const selectedClientIds = blockEditor.getSelectedBlockClientIds();
+			const clientIds = selectedClientIds.includes( clientId )
+				? selectedClientIds
+				: [ clientId ];
+			if ( ! selectedClientIds.includes( clientId ) ) {
+				selectBlock( clientId );
+			}
+			// Focusing a block collapses a multi-selection. Only move focus for
+			// single-block menus so the selected blocks stay selected.
+			if ( clientIds.length === 1 ) {
+				blockElement.focus( { preventScroll: true } );
+			}
+
+			// The editor canvas can live in an iframe while its popovers render in
+			// the parent document. Translate the cursor to that document's viewport.
+			let anchorDocument = ownerDocument;
+			let x = event.clientX;
+			let y = event.clientY;
+			let frameElement = anchorDocument.defaultView.frameElement;
+			while ( frameElement ) {
+				const frameRect = frameElement.getBoundingClientRect();
+				x += frameRect.left;
+				y += frameRect.top;
+				anchorDocument = frameElement.ownerDocument;
+				frameElement = anchorDocument.defaultView.frameElement;
+			}
+			const rect = new anchorDocument.defaultView.DOMRect( x, y, 0, 0 );
+			setContextMenu( {
+				clientIds,
+				anchor: {
+					ownerDocument: anchorDocument,
+					getBoundingClientRect: () => rect,
+				},
+			} );
+			event.preventDefault();
+			event.stopPropagation();
+		},
+		[ allowRightClickOverrides, isPreviewMode, registry, selectBlock ]
+	);
 
 	const delayedBlockVisibilityUpdates = useDebounce(
 		useCallback( () => {
@@ -113,12 +208,30 @@ function Root( { className, ...settings } ) {
 				'is-focus-mode': isFocusMode,
 				'is-preview-mode': isPreviewMode,
 			} ),
+			onMouseDownCapture,
+			onContextMenu,
 		},
 		settings
 	);
 	return (
 		<IntersectionObserver.Provider value={ intersectionObserver }>
 			<div { ...innerBlocksProps } />
+			{ contextMenu && (
+				<BlockSettingsDropdown
+					clientIds={ contextMenu.clientIds }
+					open
+					onToggle={ ( isOpen ) => {
+						if ( ! isOpen ) {
+							setContextMenu( undefined );
+						}
+					} }
+					popoverProps={ {
+						anchor: contextMenu.anchor,
+						placement: 'bottom-start',
+					} }
+					toggleProps={ { as: ContextMenuToggle } }
+				/>
+			) }
 			{ !! editedContentOnlySection && (
 				<StopEditingContentOnlySectionOnOutsideSelect
 					clientId={ editedContentOnlySection }

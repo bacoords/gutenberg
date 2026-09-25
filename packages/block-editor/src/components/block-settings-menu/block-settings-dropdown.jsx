@@ -68,6 +68,7 @@ export function BlockSettingsDropdown( {
 	children,
 	__experimentalSelectBlock,
 	isContentOnlyListView,
+	popoverProps,
 	...props
 } ) {
 	// Get the client id of the current block for this menu, if one is set.
@@ -232,7 +233,7 @@ export function BlockSettingsDropdown( {
 						icon={ moreVertical }
 						label={ __( 'Options' ) }
 						className="block-editor-block-settings-menu"
-						popoverProps={ POPOVER_PROPS }
+						popoverProps={ { ...POPOVER_PROPS, ...popoverProps } }
 						noIcons
 						{ ...props }
 					>
