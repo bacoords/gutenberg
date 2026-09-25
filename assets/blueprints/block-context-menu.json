@@ -14,7 +14,7 @@
 			"step": "installPlugin",
 			"pluginData": {
 				"resource": "url",
-				"url": "https://github.com/bacoords/gutenberg/releases/download/block-context-menu-playground-868559f/gutenberg-block-context-menu-868559f.zip"
+				"url": "https://github.com/bacoords/gutenberg/releases/download/block-context-menu-playground-a36da57/gutenberg-block-context-menu-a36da57.zip"
 			},
 			"options": {
 				"activate": true
