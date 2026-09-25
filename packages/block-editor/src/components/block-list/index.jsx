@@ -120,10 +120,6 @@ function Root( { className, ...settings } ) {
 			}
 
 			const { ownerDocument } = blockElement;
-			if ( ! ownerDocument.hasFocus() ) {
-				return;
-			}
-
 			const selectedClientIds = blockEditor.getSelectedBlockClientIds();
 			const clientIds = selectedClientIds.includes( clientId )
 				? selectedClientIds
